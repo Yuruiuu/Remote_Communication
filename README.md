@@ -1,0 +1,2 @@
+# Remote_Communication
+基于libevent和线程池实现的高并发服务器，基于Qt实现的客户端

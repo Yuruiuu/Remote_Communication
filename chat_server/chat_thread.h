@@ -25,6 +25,9 @@ public:
 	std::thread::id thread_get_id();//线程标准库里有个get_id()
 	struct event_base *thread_get_base();
 	bool thread_read_data(struct bufferevent *, char *);
+	void thread_write_data(struct bufferevent* bev,Json::Value& v);
+	void thread_register(struct bufferevent* bev,Json::Value& val);
+	void thread_login(struct bufferevent* bev,Json::Value& val);
 	static void worker(ChatThread*);
 	static void timeout_cb(evutil_socket_t fd, short event, void *arg);
 	static void thread_readcb(struct bufferevent *bev, void *ctx);

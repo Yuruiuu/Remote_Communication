@@ -55,3 +55,34 @@ void ChatInfo::list_print_group()
 		std::cout<<std::endl;
 	}
 }
+
+
+
+bool ChatInfo::list_update_list(Json::Value v,struct bufferevent* bev)
+{
+	User u ={v["username"].asString(),bev};
+
+	std::unique_lock<std::mutex> lck(list_mutex);//加锁
+	
+	online_user->push_back(u);
+
+	return true;
+
+}
+
+//从在线用户里查找好友，若找到则在线，返回好友的bev
+//若未找到，则不在线，返回NULL
+struct bufferevent * ChatInfo::list_friend_online(std::string n)
+{
+	std::unique_lock<std::mutex> lck(list_mutex);
+
+	for (auto it = online_user->begin(); it != online_user->end(); it++)
+	{
+		if(it->name == n)
+		{
+			return it->bev;
+		}
+	}
+
+	return NULL;
+}

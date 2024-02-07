@@ -9,6 +9,25 @@
 #include<jsoncpp/json/json.h>
 
 
+void *xx(void* arg)
+{
+	int sockfd = *(int*)arg;
+
+	char buf[1024]={0};
+	int len;
+
+	while(1)
+	{
+		if(recv(sockfd,&len,4,0)==0) break;
+		printf("收到长度 %d", len);
+		if(recv(sockfd,buf,len,0)==0) break;
+		printf("收到数据 %s\n", buf);
+		memset(buf,0,1024);
+	}
+
+	return NULL;
+}
+
 int main()
 {
 	int sockfd = socket(AF_INET,SOCK_STREAM,0);
@@ -25,10 +44,14 @@ int main()
 		exit(1);
 	}
 
+	pthread_t tid;
+	pthread_create(&tid,NULL,xx,&sockfd);
+
+
 	Json::Value val;
-	val["cmd"]="register";
-	val["name"]="tom";
-	val["password"]="1111";
+	val["cmd"]="login";
+	val["username"]="a";
+	val["password"]="11111";
 
 	std::string s = Json::FastWriter().write(val);
 	char buf[128]={0};

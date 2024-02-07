@@ -88,3 +88,131 @@ int DataBase::database_get_group_info(std::string *g)
 	mysql_free_result(res);
 	return idx;
 }
+
+
+bool DataBase::database_user_is_exist(std::string u)
+{
+	char sql[256]={0};
+
+	sprintf(sql,"select * from chat_user where username = '%s';",u.c_str());
+
+	std::unique_lock<std::mutex> lck(_mutex);//加锁
+
+	if(mysql_query(mysql,sql)!=0)
+	{
+		std::cout<<"select error"<<std::endl;
+		return true;//用户已存在
+	}
+
+	MYSQL_RES *res = mysql_store_result(mysql);
+	if(res==NULL)
+	{
+		std::cout<<"store result error"<<std::endl;
+		return true;
+	}
+
+	MYSQL_ROW row = mysql_fetch_row(res);
+	if(row == NULL)
+	{
+		return false;
+	}
+	else 
+	{
+		return true;
+	}
+}
+
+
+void DataBase::database_insert_user_info(Json::Value& v)
+{
+	std::string username = v["username"].asString();
+	std::string password = v["password"].asString();
+
+	char sql[256] = {0};
+
+	sprintf(sql,"insert into chat_user (username, password) values ('%s', '%s');",
+			username.c_str(),password.c_str());
+
+	std::unique_lock<std::mutex> lck(_mutex);//加锁
+
+	if(mysql_query(mysql,sql)!=0)
+	{
+		std::cout<<"insert into error"<<std::endl;
+		return;
+	}
+}
+
+
+bool DataBase::database_password_correct(Json::Value& v)
+{
+	std::string username = v["username"].asString();
+	std::string password = v["password"].asString();
+
+	char sql[256] = {0};
+	sprintf(sql,"select password from chat_user where username = '%s';",username.c_str());
+
+	std::unique_lock<std::mutex> lck(_mutex);//加锁
+
+	if(mysql_query(mysql,sql)!=0)
+	{
+		std::cout<<"select password error"<<std::endl;
+		return false;
+	}
+
+	MYSQL_RES *res = mysql_store_result(mysql);
+	if(res==NULL)
+	{
+		std::cout<<"mysql store result error"<<std::endl;
+		return false;
+	}
+
+	MYSQL_ROW row = mysql_fetch_row(res);
+	if(row==NULL)
+	{
+		std::cout<<"fetch row error"<<std::endl;
+		return false;
+	}
+
+	if(!strcmp(row[0],password.c_str()))
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+bool DataBase::database_get_friend_group(Json::Value& v,std::string& frilist, std::string& grolist)
+{
+	char sql[1024] = {0};
+	sprintf(sql,"select * from chat_user where username = '%s';",
+			v["username"].asString().c_str());
+
+	std::unique_lock<std::mutex> lck(_mutex);//加锁
+
+	if(mysql_query(mysql,sql)!=0)
+	{
+		std::cout<<"select * error"<<std::endl;
+		return false;
+	}
+
+	MYSQL_RES* res = mysql_store_result(mysql);
+	if(res==NULL)
+	{
+		std::cout<<"store result error"<<std::endl;
+		return false;
+	}
+
+	MYSQL_ROW row = mysql_fetch_row(res);
+	if(row==NULL)
+	{
+		return false;
+	}
+
+	frilist = std::string(row[2]);
+	grolist = std::string(row[3]);
+
+	return true;
+
+}

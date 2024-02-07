@@ -72,7 +72,7 @@ void ChatServer::listen(const char* ip, int port)
 
 
 	struct evconnlistener *listener=evconnlistener_new_bind(base,
-			listener_cb,this,LEV_OPT_CLOSE_ON_FREE,5,
+			listener_cb,this,LEV_OPT_CLOSE_ON_FREE|LEV_OPT_REUSEABLE,5,
 			(struct sockaddr*)&server_info,sizeof(server_info));
 
 	if(listener == NULL){

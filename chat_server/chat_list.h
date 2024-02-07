@@ -6,6 +6,9 @@
 #include<map>
 #include<list>
 #include<mutex>
+#include<event.h>
+#include<jsoncpp/json/json.h>
+
 
 struct User
 {
@@ -29,6 +32,8 @@ public:
 	~ChatInfo();
 	void list_update_group(std::string* ,int);
 	void list_print_group();
+	bool list_update_list(Json::Value v,struct bufferevent* bev);
+	struct bufferevent * list_friend_online(std::string n);
 };
 
 #endif

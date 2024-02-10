@@ -86,3 +86,118 @@ struct bufferevent * ChatInfo::list_friend_online(std::string n)
 
 	return NULL;
 }
+
+
+bool ChatInfo::list_group_is_exist(std::string name)
+{
+	std::unique_lock<std::mutex> lck(map_mutex);
+
+	for (auto it = group_info->begin(); it != group_info->end(); it++)
+	{
+		if (it->first == name)
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
+
+void ChatInfo::list_add_new_group(std::string g, std::string owner)
+{
+	std::list<std::string> l;
+	l.push_back(owner);
+
+	std::unique_lock<std::mutex> lck(map_mutex);
+
+	group_info->insert(make_pair(g, l));
+}
+
+bool ChatInfo::list_member_is_group(std::string g, std::string u)
+{
+	std::unique_lock<std::mutex> lck(map_mutex);//访问map前加锁
+
+	for (auto it = group_info->begin(); it != group_info->end(); it++)
+	{
+		if (it->first == g)
+		{
+			for (auto i = it->second.begin(); i != it->second.end(); i++)
+			{
+				if (*i == u)
+				{
+					return true;
+				}
+			}
+
+			return false;
+		}
+	}
+
+	return false;
+}
+
+void ChatInfo::list_update_group_member(std::string g, std::string u)
+{
+	std::unique_lock<std::mutex> lck(map_mutex);
+
+	for (auto it = group_info->begin(); it != group_info->end(); it++)
+	{
+		if (it->first == g)
+		{
+			it->second.push_back(u);
+		}
+	}
+}
+
+
+std::list<std::string> &ChatInfo::list_get_list(std::string g)
+{
+	auto it = group_info->begin();
+
+	std::unique_lock<std::mutex> lck(map_mutex);
+
+	for (; it != group_info->end(); it++)
+	{
+		if (it->first == g)
+		{
+			break;
+		}
+	}
+
+	return it->second;
+}
+
+void ChatInfo::list_delete_user(std::string username)
+{
+	std::unique_lock<std::mutex> lck(list_mutex);
+
+	for (auto it = online_user->begin(); it != online_user->end(); it++)
+	{
+		if (it->name == username)
+		{
+			online_user->erase(it);
+			return;
+		}
+	}
+}
+
+void ChatInfo::list_get_group_member(std::string g, std::string &m)
+{
+	std::unique_lock<std::mutex> lck(map_mutex);
+
+	for (auto it = group_info->begin(); it != group_info->end(); it++)
+	{
+		if (it->first == g)
+		{
+			for (auto i = it->second.begin(); i != it->second.end(); i++)
+			{
+				m.append(*i);
+				m.append("|");
+			}
+			break;
+		}
+	}
+
+	m.erase(m.length() - 1, 1);
+}

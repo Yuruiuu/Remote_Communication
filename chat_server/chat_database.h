@@ -6,8 +6,8 @@
 #include<mutex>
 #include<iostream>
 #include<stdio.h>  //sprintf
-#include<jsoncpp/json/json.h>
-
+#include <json/json.h>
+#include<string.h>
 
 
 class DataBase
@@ -26,6 +26,11 @@ public:
 	int database_get_group_info(std::string *);//返回群的数量
 	bool database_password_correct(Json::Value& val);
 	bool database_get_friend_group(Json::Value& ,std::string&, std::string&);
+	void database_add_friend(Json::Value&);
+	void database_update_friendlist(std::string &u, std::string &f);
+	void database_add_new_group(std::string, std::string);
+	void database_update_group_member(std::string g, std::string u);
+	void database_update_info(std::string table,std::string groupname, std::string username);
 };
 
 

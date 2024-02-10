@@ -7,7 +7,7 @@
 #include<list>
 #include<mutex>
 #include<event.h>
-#include<jsoncpp/json/json.h>
+#include<json/json.h>
 
 
 struct User
@@ -34,6 +34,13 @@ public:
 	void list_print_group();
 	bool list_update_list(Json::Value v,struct bufferevent* bev);
 	struct bufferevent * list_friend_online(std::string n);
+	bool list_group_is_exist(std::string);
+	void list_add_new_group(std::string g, std::string owner);
+	bool list_member_is_group(std::string g, std::string u);
+	void list_update_group_member(std::string g, std::string u);
+	std::list<std::string>& list_get_list(std::string g);
+	void list_delete_user(std::string username);
+	void list_get_group_member(std::string g, std::string &m);
 };
 
 #endif

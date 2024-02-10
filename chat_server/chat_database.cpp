@@ -209,10 +209,215 @@ bool DataBase::database_get_friend_group(Json::Value& v,std::string& frilist, st
 	{
 		return false;
 	}
-
-	frilist = std::string(row[2]);
-	grolist = std::string(row[3]);
+	if(row[2])
+	{
+		frilist = std::string(row[2]);
+	}
+	if(row[3])
+	{
+		grolist = std::string(row[3]);
+	}
 
 	return true;
 
+}
+
+void DataBase::database_add_friend(Json::Value& v)
+{
+	std::string username = v["username"].asString();
+	std::string friendname = v["friend"].asString();
+
+	database_update_friendlist(username,friendname);
+	database_update_friendlist(friendname,username);
+}
+
+void DataBase::database_update_friendlist(std::string &u, std::string &f)
+{
+	char sql[256] = {0};
+	std::string friendlist;
+	sprintf(sql, "select friendlist from chat_user where username = '%s';", u.c_str());
+
+	std::unique_lock<std::mutex> lck(_mutex);
+
+	if (mysql_query(mysql, sql) != 0)
+	{
+		std::cout << "select friendlist error" << std::endl;
+		return;
+	}
+
+	MYSQL_RES *res = mysql_store_result(mysql);
+	if (NULL == res)
+	{
+		std::cout << "store result error" << std::endl;
+		return;
+	}
+
+	MYSQL_ROW row = mysql_fetch_row(res);
+	if (NULL == row[0])//先前没有好友
+			   //注意row==NULL是查询失败，row[0]==NULL是查询到的结果为空
+	{
+		friendlist.append(f);
+	}
+	else
+	{
+		friendlist.append(row[0]);//row[0]为原先好友列表
+		friendlist.append("|");
+		friendlist.append(f);
+	}
+
+	memset(sql, 0, sizeof(sql));
+
+	sprintf(sql, "update chat_user set friendlist = '%s' where username = '%s';", friendlist.c_str(), u.c_str());
+
+	if (mysql_query(mysql, sql) != 0)
+	{
+		std::cout << "update chat_user error" << std::endl;
+	}
+}
+
+void DataBase::database_add_new_group(std::string g, std::string owner)
+{
+	char sql[256] = {0};
+	std::string grouplist;
+
+	//修改chat_group表
+	sprintf(sql, "insert into chat_group values ('%s', '%s', '%s');",
+			g.c_str(), owner.c_str(), owner.c_str());
+
+	std::unique_lock<std::mutex> lck(_mutex);
+
+	if (mysql_query(mysql, sql) != 0)
+	{
+		std::cout << "insert error" << std::endl;
+		return;
+	}
+
+	//修改chat_user表
+	memset(sql, 0, sizeof(sql));
+	sprintf(sql, "select grouplist from chat_user where username = '%s';",
+			owner.c_str());
+
+	if (mysql_query(mysql, sql) != 0)
+	{
+		std::cout << "select friendlist error" << std::endl;
+		return;
+	}
+
+	MYSQL_RES *res = mysql_store_result(mysql);
+	if (NULL == res)
+	{
+		std::cout << "store result error" << std::endl;
+		return;
+	}
+
+	MYSQL_ROW row = mysql_fetch_row(res);
+	if (NULL == row[0])
+	{
+		grouplist.append(g);
+	}
+	else
+	{
+		grouplist.append(row[0]);
+		grouplist.append("|");
+		grouplist.append(g);
+	}
+
+	memset(sql, 0, sizeof(sql));
+
+	sprintf(sql, "update chat_user set grouplist = '%s' where username = '%s';", grouplist.c_str(), owner.c_str());
+
+	if (mysql_query(mysql, sql) != 0)
+	{
+		std::cout << "update chat_user error" << std::endl;
+	}
+}
+
+
+void DataBase::database_update_group_member(std::string g, std::string u)
+{
+	//先修改chat_group内容
+	database_update_info("chat_group", g, u);
+
+	//再修改chat_user内容
+	database_update_info("chat_user", g, u);
+
+}
+
+void DataBase::database_update_info(std::string table,
+		 				std::string groupname, std::string username)
+{
+	//先把数据读出来
+	char sql[256] = {0};
+	std::string member;
+
+	if (table == "chat_group")
+	{
+		sprintf(sql, "select groupmember from chat_group where groupname = '%s';", groupname.c_str());
+	}
+	else if (table == "chat_user")
+	{
+		sprintf(sql, "select grouplist from chat_user where username = '%s';", username.c_str());
+	}
+
+	std::unique_lock<std::mutex> lck(_mutex);
+
+	if (mysql_query(mysql, sql) != 0)
+	{
+		std::cout << "select error" << std::endl;
+		return;
+	}
+
+	MYSQL_RES *res = mysql_store_result(mysql);
+	if (NULL == res)
+	{
+		std::cout << "store result error" << std::endl;
+		return;
+	}
+
+	MYSQL_ROW row = mysql_fetch_row(res);
+	if (row[0] == NULL)
+	{
+		if (table == "chat_group")
+		{
+			member.append(username);
+		}
+		else if (table == "chat_user")
+		{
+			member.append(groupname);
+		}
+	}
+	else
+	{
+		if (table == "chat_group")
+		{
+			member.append(row[0]);
+			member.append("|");
+			member.append(username);
+		}
+		else if (table == "chat_user")
+		{
+			member.append(row[0]);
+			member.append("|");
+			member.append(groupname);
+		}
+	}
+
+	mysql_free_result(res);
+
+	//修改后再更新
+	memset(sql, 0, sizeof(sql));
+
+	if (table == "chat_group")
+	{
+		sprintf(sql, "update chat_group set groupmember = '%s' where groupname = '%s';", member.c_str(), groupname.c_str());
+	}
+	else if (table == "chat_user")
+	{
+		sprintf(sql, "update chat_user set grouplist = '%s' where username = '%s';", member.c_str(), username.c_str());
+	}
+
+	if (mysql_query(mysql, sql) != 0)
+	{
+		std::cout << "update chat_group error" << std::endl;
+	}
 }

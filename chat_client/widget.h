@@ -5,6 +5,10 @@
 #include<QTcpSocket>
 #include<QHostAddress>
 #include<QMessageBox>
+#include<QJsonObject>
+#include<QJsonDocument>
+#include<string.h>
+#include<QDebug>
 
 #define IP "121.41.28.165"
 #define PORT 8888
@@ -25,6 +29,17 @@ private slots:
     void client_connect_success();
     void client_disconnect();
     void client_reply_info();
+
+    void on_registerButton_clicked();
+
+
+    void on_loginButton_clicked();
+
+private:
+    void client_send_data(QJsonObject &);
+    void client_recv_data(QByteArray &);
+    void client_register_handler(QJsonObject &);
+    void client_login_handler(QJsonObject &);
 
 private:
     Ui::Widget *ui;

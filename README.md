@@ -8,3 +8,42 @@
 
 ## 功能演示
 ![image](https://github.com/Yuruiuu/Remote_Communication/blob/main/asserts/example.png)
+
+## 克隆仓库
+```
+git clone https://github.com/Yuruiuu/Remote_Communication.git
+```
+
+## 使用指南
+### 服务器
+#### 安装依赖
+下载libevent和jsoncpp库。
+```
+cd yourprojectname
+sudo apt install libevent-dev
+sudo apt install libjsoncpp-dev
+```
+
+#### 设置 
+在`chatserver.h`中填写服务器私网IP和端口。（使用`ifconfig`命令查看私网IP。)
+```
+#define IP "your server IP"
+#define PORT xxxx
+```
+
+#### 编译
+编译：运行`make`命令以使用MakeFile编译。
+```
+make
+```
+
+### 客户端
+环境： Qt5 、 C++11
+
+使用`Qt Creator`打开`.pro`文件。
+
+填写您的服务器公网ip以及端口号（需与服务器端口号相同）
+```
+#define IP "your server IP"
+#define PORT xxxx
+```
